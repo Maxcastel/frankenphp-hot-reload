@@ -3,6 +3,9 @@ import { reloadHtmlDocument } from "../helpers.js";
 import { log } from "../logger.js";
 import { StimulusReloader } from "./stimulus_reloader.js";
 
+// Libraries such as Turbo inject their own styles in the head, they must not shift the pairing.
+const renderedStyles = new WeakSet(document.head.querySelectorAll("style"));
+
 export class MorphHtmlReloader {
   constructor() {
     if (typeof window.Idiomorph !== "object") {
@@ -36,18 +39,20 @@ export class MorphHtmlReloader {
   #updateHeadStyles(newHead) {
     const newStyles = newHead.querySelectorAll("style");
 
-    document.head.querySelectorAll("style").forEach((currentStyle, index) => {
-      const newStyle = newStyles[index];
+    Array.from(document.head.querySelectorAll("style"))
+      .filter((style) => renderedStyles.has(style))
+      .forEach((currentStyle, index) => {
+        const newStyle = newStyles[index];
 
-      if (
-        !newStyle ||
-        currentStyle.hasAttribute("data-frankenphp-hot-reload-preserve")
-      ) {
-        return;
-      }
+        if (
+          !newStyle ||
+          currentStyle.hasAttribute("data-frankenphp-hot-reload-preserve")
+        ) {
+          return;
+        }
 
-      window.Idiomorph.morph(currentStyle, newStyle);
-    });
+        window.Idiomorph.morph(currentStyle, newStyle);
+      });
   }
 
   /**
