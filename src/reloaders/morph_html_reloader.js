@@ -51,7 +51,13 @@ export class MorphHtmlReloader {
           return;
         }
 
-        window.Idiomorph.morph(currentStyle, newStyle);
+        window.Idiomorph.morph(currentStyle, newStyle, {
+          callbacks: {
+            // The page's CSP only allows the nonce of the initial response.
+            beforeAttributeUpdated: (/** @type {string} */ name) =>
+              name !== "nonce",
+          },
+        });
       });
   }
 
